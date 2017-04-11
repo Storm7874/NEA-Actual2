@@ -1,0 +1,30 @@
+L-5-0
+
+comamnds = []
+
+file = open(file.txt, "r")
+
+content = file.read()
+
+rows = contents.split("\n")
+
+for column in rows:
+    columns = column.split(",")
+    commands.append(columns)
+
+######################################## V V
+
+commands = []
+
+file = open("TestData.txt", "r")
+
+content = file.read()
+
+rows = content.split("\n")
+
+for column in rows:
+    if len(column) > 0:
+        columns = column.split(",")
+        commands.append(columns)
+
+print(commands)

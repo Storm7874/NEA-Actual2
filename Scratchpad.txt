@@ -1,0 +1,14 @@
+commands = []
+
+file = open("TestData.txt", "r")
+
+content = file.read()
+
+rows = content.split("\n")
+
+for column in rows:
+    if len(column) > 0:
+        columns = column.split(",")
+        commands.append(columns)
+
+print(commands)

@@ -1,0 +1,28 @@
+## Examples:
+
+L = Left
+R = Right
+F = Forward
+
+    L         XX       XX
+Direction  Duration   PWM
+
+
+EG:
+
+L-5-0
+
+Left, for five seconds, with no pwm
+
+R-10-1
+
+Right, For ten seconds, with 1 sec pwm
+
+Multiple Commands:
+
+F-1-0\L-1-0\R-1-0\F-5-0.5
+
+Forwards, Left, Right, Forwards
+
+L, 5, 0
+R, 10, 1
