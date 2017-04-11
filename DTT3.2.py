@@ -1,6 +1,7 @@
 # DTT - Drivetrain Interface Script
 # Version 3.2x
 # Now with GIT!
+#Still testing, of course.
 # CNAPTA
 col = False
 try:
