@@ -1,5 +1,5 @@
 # DTT - Drivetrain Interface Script
-# Version 3.2x
+# Version 3.2x7
 # CNAPTA
 col = False
 try:
