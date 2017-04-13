@@ -163,42 +163,42 @@ class Drivetrain():
             print("[-] LEFT MOTOR: P:{} D:{}".format(pwm, duration))
 
     def RightMotorEngage(self, RIGHT, duration, pwm):
-        if self.__pwm == 0:
-            GPIO.output(self.__RIGHT, GPIO.LOW)
-            time.sleep(self.__duration)
-            GPIO.output(self.__RIGHT, GPIO.HIGH)
+        if pwm == 0:
+            GPIO.output(RIGHT, GPIO.LOW)
+            time.sleep(duration)
+            GPIO.output(RIGHT, GPIO.HIGH)
         else:
             timer = 0
             while True:
                 time.time()
-                GPIO.output(self.__RIGHT, GPIO.LOW)
-                time.sleep(self.__pwm)
-                GPIO.output(self.__RIGHT, GPIO.HIGH)
+                GPIO.output(RIGHT, GPIO.LOW)
+                time.sleep(pwm)
+                GPIO.output(RIGHT, GPIO.HIGH)
                 timer += time.time()
-                if timer > self.__duration:
+                if timer > duration:
                     break
-            print("[-] RIGHT MOTOR: P:{} D:{}".format(self.__pwm, self.__duration))
+            print("[-] RIGHT MOTOR: P:{} D:{}".format(pwm, duration))
 
     def DualMotorEngage(self, LEFT, RIGHT, duration, pwm):
-        if self.__pwm == 0:
-            GPIO.output(self.__LEFT, GPIO.LOW)
-            GPIO.output(self.__RIGHT, GPIO.LOW)
-            time.sleep(self.__duration)
-            GPIO.output(self.__RIGHT, GPIO.HIGH)
-            GPIO.output(self.__LEFT, GPIO.HIGH)
+        if pwm == 0:
+            GPIO.output(LEFT, GPIO.LOW)
+            GPIO.output(RIGHT, GPIO.LOW)
+            time.sleep(duration)
+            GPIO.output(RIGHT, GPIO.HIGH)
+            GPIO.output(LEFT, GPIO.HIGH)
         else:
             timer = 0
             while True:
                 time.time()
-                GPIO.output(self.__RIGHT, GPIO.LOW)
-                GPIO.output(self.__LEFT, GPIO.LOW)
-                time.sleep(self.__pwm)
-                GPIO.output(self.__LEFT, GPIO.HIGH)
-                GPIO.output(self.__RIGHT, GPIO.HIGH)
+                GPIO.output(RIGHT, GPIO.LOW)
+                GPIO.output(LEFT, GPIO.LOW)
+                time.sleep(pwm)
+                GPIO.output(LEFT, GPIO.HIGH)
+                GPIO.output(RIGHT, GPIO.HIGH)
                 timer += time.time()
-                if timer > self.__duration:
+                if timer > duration:
                     break
-            print("[-] DUAL MOTOR: P:{} D:{}".format(self.__pwm, self.__duration))
+            print("[-] DUAL MOTOR: P:{} D:{}".format(pwm, duration))
 
     def GetNewDeviceState(self, STATE):
         IsValidState = False
