@@ -3,8 +3,8 @@
 ## Initiate import stage
 
 try:
-    from Notify import Main as Notify
-    Notify = Notify.Main()
+    from Notify import Main
+    Notify = Main()
     Notify.SetMode("A")
 except(ImportError):
     print("[!] Failed to import Notify.py")
