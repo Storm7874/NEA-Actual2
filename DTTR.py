@@ -3,52 +3,81 @@
 ## Initiate import stage
 
 try:
-    from Colorama import *
-    print(Fore.GREEN + "[+] Imported Colorama Successfully." + Style.RESET_ALL)
-
+    from Notify import Main as Notify
+    Notify = Notify.Main()
+    Notify.SetMode("A")
 except(ImportError):
-    print("[!] Failed to import color modules. Aborting.")
-    exit()
+    print("[!] Failed to import Notify.py")
 
 try:
     import RPi.GPIO as GPIO
-    print(Fore.GREEN + "[+] Imported GPIO modules")
+    Notify.Success("Imported GPIO modules")
 except(ImportError):
-    print(Fore.RED + "[!] Failed to import RPi Modules.")
-    print(Fore.YELLOW + "[!] Attempting to import eGPIO modules")
+    Notify.Error("Failed to import GPIO modules.")
+    Notify.Warning("Attempting to import eGPIO modules.")
+    #print(Fore.YELLOW + "[!] Attempting to import eGPIO modules")
     try:
         from EmulatorGUI import GPIO
-        print(Fore.GREEN + "[+] Successfully imported eGPIO modules." + Style.RESET_ALL)
+        Notify.Success("Successfully imported eGPIO modules")
     except(ImportError):
-        print(Fore.RED + "[!] Failed to import eGPIO modules. Aborting." + Style.RESET_ALL)
+        Notify.Error("Failed to import eGPIO modules. Aborting.")
         exit()
 
-try:
-    import os
-except(ImportError):
-    print(Fore.RED + "[!] Failed to import OS modules." + Style.RESET_ALL)
+import os
+import time
+import random
 
-try:
-    import time
-except(ImportError):
-    print(Fore.RED + "[!] Failed to import time." + Style.RESET_ALL)
+Notify.Success("Module import complete.")
 
-try:
-    import random
-except(ImportError):
-    print(Fore.RED + "[!] " + Style.RESET_ALL + "Failed to import random." )
 
-print(Fore.GREEN + "[+] " + Style.RESET_ALL + "Successfully imported modules.")
+duration = 24
 
 class Drivetrain():
-    def __init__(self, left, right, pwm, duration, direction):
-        left = 24
-        right = 26
-        pwm = 0
-        duration = 0
-        direction = ""
+    def __init__(self):
+        self.left = 24
+        self.right = 26
+        self.pwm = 0
+        self.duration = 0
+        self.direction = ""
 
-    def GetNewData(self, left, right, pwm, duration, direction):
+    def GetNewData(self):
+        # Get new direction data
+        while True:
+            try:
+                self.duration = float(input("[?] Duration: "))
+                break
+            except ValueError:
+                Notify.Warning("Please enter a valid number")
+        while True:
+            try:
+                self.pwm = float(input("[?] PWM: "))
+                if self.pwm > self.duration:
+                    Notify.Warning("Invalid state: PWM < Duration")
+                else:
+                    pass
+            except ValueError:
+                Notify.Error("Please enter a valid number.")
+        while True:
+            try:
+                self.direction = input("[?] Direction: ")
+                if self.direction not in ["L","F","R"]:
+                    Notify.Error("Invalid Direction")
+                else:
+                    break
+            except ValueError:
+                Notify.Error("Please enter a valid direction")
+
+        Notify.Info()
+
+
+
+test = Drivetrain()
+test.GetNewData()
+
+
+
+
+
 
 
 
