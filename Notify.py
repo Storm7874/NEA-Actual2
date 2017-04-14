@@ -72,6 +72,17 @@ class Main():
         elif self.mode == "D":
             print(Fore.GREEN +"(+) " + msg + Style.RESET_ALL)
 
+    def Test(self):
+        modes = ["A","B","C","D"]
+        for count in range(0,len(modes)):
+            self.Error("This is an error.")
+            self.Info("This is an information")
+            self.Warning("This is a warning")
+            self.Success("This is a success")
+            self.mode = modes[count]
+
+
+
 
 #def Warning(msg):
 #    print(Fore.YELLOW + "[!] " + Style.RESET_ALL + msg)

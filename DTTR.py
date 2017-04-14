@@ -33,7 +33,6 @@ import random
 
 Notify.Success("Module import complete.")
 
-
 duration = 24
 
 class Rangefinder():
@@ -86,6 +85,8 @@ class Drivetrain(Rangefinder):
         while True:
             try:
                 self.duration = float(input("[?] Duration: "))
+                if self.duration > 0:
+                    Notify.Warning("Please enter a positive number")
                 break
             except ValueError:
                 Notify.Warning("Please enter a valid number")
@@ -94,6 +95,8 @@ class Drivetrain(Rangefinder):
                 self.pwm = float(input("[?] PWM: "))
                 if self.pwm > self.duration:
                     Notify.Warning("Invalid state: PWM < Duration")
+                elif self.pwm < 0:
+                    Notify.Warning("Cannot have negative PWM.")
                 else:
                     break
             except ValueError:
@@ -101,6 +104,7 @@ class Drivetrain(Rangefinder):
         while True:
             try:
                 self.direction = input("[?] Direction: ")
+                self.direction = self.direction.upper()
                 if self.direction not in ["L","F","R"]:
                     Notify.Error("Invalid Direction")
                 else:
@@ -204,6 +208,8 @@ class Drivetrain(Rangefinder):
             self.DualMotors()
 
 
+class Vehicle(Drivetrain):
+    pass
 
 test = Drivetrain()
 
