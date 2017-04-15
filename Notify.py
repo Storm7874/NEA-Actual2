@@ -81,6 +81,17 @@ class Main():
             self.Success("This is a success")
             self.mode = modes[count]
 
+    def Red(self):
+        print(Fore.RED)
+
+    def Green(self):
+        print(Fore.GREEN)
+
+    def Cyan(self):
+        print(Fore.CYAN)
+
+    def ClearColour(self):
+        print(Style.RESET_ALL)
 
 
 

@@ -30,7 +30,9 @@ except(ImportError):
         exit()
 
 try:
-    import utils
+    from utilsv2 import Main as MainUtils
+    utils = MainUtils()
+    utils.SetDeviceEnvironment(1) #### PLATFORM DEPENDANT VARIABLE ####
     Notify.Success("Imported Utils")
 except ImportError:
     Notify.Error("Failed to import utils.")
@@ -38,7 +40,13 @@ except ImportError:
 import os
 import time
 import random
-
+import datetime
+import getpass
+import platform
+if platform.platform() == "Linux":
+    utils.SetDeviceEnvironment(1)
+else:
+    utils.SetDeviceEnvironment(0)
 Notify.Success("Module import complete.")
 
 duration = 24
@@ -69,15 +77,12 @@ class Rangefinder():
             self.distance = pulse_duration
             Notify.Info("Returned distance: {}".format(self.distance))
 
-
-
     def InitialSetup(self):
         if GPIOstate == True:
             GPIO.setup(self.trg, GPIO.OUT)
             GPIO.setup(self.ech, GPIO.IN)
         else:
             pass
-
 
 
 class Drivetrain(Rangefinder):
@@ -113,8 +118,11 @@ class Drivetrain(Rangefinder):
             try:
                 self.direction = input("[?] Direction: ")
                 self.direction = self.direction.upper()
-                if self.direction not in ["L","F","R"]:
+                if self.direction not in ["L","F","R","E"]:
                     Notify.Error("Invalid Direction")
+                if self.direction == "E":
+
+                    break
                 else:
                     break
             except ValueError:
@@ -224,13 +232,311 @@ class Drivetrain(Rangefinder):
 
 
 class Vehicle(Drivetrain):
-    pass
+    def __init__(self):
+        self.left = 24
+        self.right = 26
+        self.pwm = 0
+        self.duration = 0
+        self.direction = ""
+        self.FirstRun = True
+        if self.FirstRun == True:
+            #self.PreInit()
+            self.InitialSetup()
+            Notify.Info("Initial setup completed.")
+            self.FirstRun = False
 
-test = Drivetrain()
+    def GetNewDataSet(self):
+        self.day = datetime.datetime.today().day
+        self.month = datetime.datetime.today().month
+        self.year = datetime.datetime.today().year
+        self.hour = datetime.datetime.today().hour
+        self.minute = datetime.datetime.today().minute
+        self.DeviceTemperature = utils.GetDeviceTemperature()
+        self.DeviceName = getpass.getuser
+        self.Processor = platform.processor()
+        self.Arch = platform.architecture()
+        if self.hour <= 12:
+            self.ampm = "am"
+        else:
+            self.ampm = "pm"
+            if datetime.datetime.today().minute in [0,1,2,3,4,5,6,7,8,9]:
+                #Need to append a zero in this case, to avoid things like
+                # 13:8pm etc
+                self.minute = 0 + datetime.datetime.today().minute
 
-test.PreInit()
-while True:
-    try:
-        test.GetNewData()
-    except KeyboardInterrupt:
-        Notify.Error("Aborting.")
+    def AutomaticModeMenu(self):
+        print("""
+            |-----------------------------------------------------------------|
+            |                   AUTOMATIC MODE - Menu                         |
+            |-----------------------------------------------------------------|
+            |   [1] Load data from file                                       |
+            |   [2] Load Default data                                         |
+            |   [3] Use Rangefinder to avoid obstacles [WIP]                  |
+            |                                                                 |
+            |   [4] Back                                                      |
+            |-----------------------------------------------------------------|
+            |   {}/{}/{}    {}:{}{}                                           |
+            |-----------------------------------------------------------------|
+        """.format(self.day, self.month, self.year, self.hour, self.minute, self.ampm))
+        while True:
+            try:
+                menuchoice = int(input("[?]> "))
+                if menuchoice not in [1,2,3,4]:
+                    Notify.Warning("Please enter a valid selection.")
+                break
+            except ValueError:
+                Notify.Error("Please enter a valid character.")
+            if menuchoice == 1:
+                self.LoadDataFromFile()
+            elif menuchoice == 2:
+                self.DefaultDataLoad()
+            elif menuchoice == 3:
+                self.AI()
+            elif menuchoice == 4:
+                self.MainMenu()
+
+    def DeviceInfo(self):
+        utils.ClearScreen()
+        self.GetNewDataSet()
+        print("""
+            |-----------------------------------------------------------------|
+            |                        DEVICE INFORMATION                       |
+            |-----------------------------------------------------------------|
+            |   Processor: {}
+            |   Temperature: {}
+            |   Device Name: {}
+            |   Architecture: {}
+            |-----------------------------------------------------------------|
+            |   {}/{}/{}    {}:{}{}
+            |-----------------------------------------------------------------|
+        """.format(self.Processor, self.DeviceTemperature, self.DeviceName,
+                   self.Arch, self.day, self.month, self.year, self.hour, self.minute, self.ampm))
+
+    def Cleanup(self):
+        Notify.Info("Cleaning up GPIO...")
+        GPIO.cleanup()
+
+    def MainMenu(self):
+        utils.ClearScreen()
+        self.GetNewDataSet()
+        print("""
+            |-----------------------------------------------------------------|
+            |                 NEA PROJECT - Pi Controlled Drone               |
+            |-----------------------------------------------------------------|
+            |   [1] Start                                                     |
+            |   [2] Automatic Modes                                           |
+            |   [3] Device Info                                               |
+            |   [4] Exit                                                      |
+            |   [5] Power Off                                                 |
+            |-----------------------------------------------------------------|
+            |   {}/{}/{}    {}:{}{}
+            |-----------------------------------------------------------------|
+            """.format(self.day, self.month, self.year, self.hour, self.minute, self.ampm))
+        while True:
+
+            try:
+                menuchoice = int(input("[?]> "))
+                if menuchoice not in [1,2,3,4,5]:
+                    Notify.Warning("Please enter a valid entry.")
+                break
+            except ValueError:
+                Notify.Error("Please enter a valid character.")
+        if menuchoice == 1:
+            self.MPL()
+        elif menuchoice == 2:
+            self.AutomaticModeMenu()
+        elif menuchoice == 3:
+            self.DeviceInfo()
+        elif menuchoice == 4:
+            self.Cleanup()
+            Notify.Info("Goodbye.")
+            exit()
+        elif menuchoice == 5:
+            utils.ShutdownDevice()
+
+    def LoadDataFromFile(self):
+        commands = []
+        while True:
+            try:
+                FileName = input("[?] Please enter the name of the data file to load: ")
+                DataFile = open(FileName, "r")
+                break
+            except(FileNotFoundError):
+                Notify.Error("Unable to find the file specified.")
+        DataFileContent = DataFile.read()
+        rows = DataFileContent.split("\n")
+        for column in rows:
+            if len(column) > 0:
+                columns = column.split(",")
+                commands.append(columns)
+        Notify.Success("Data '{}' successfully loaded.".format(FileName))
+        while True:
+            try:
+                Notify.Info("Press enter to execute file, Ctrl+C to abort execution.")
+                input()
+                for count in range(0,len(commands)):
+                    self.direction = commands[count][0]
+                    while True:
+                        Notify.Info("Instruction {}".format(count))
+                        if self.direction not in ["L","F","R"]:
+                            Notify.Error("Invalid direction: '{}' at instruction: '{}'".format(self.direction, count))
+                            self.direction = ""
+                            break
+                        self.duration = commands[count][1]
+                        if self.duration < 0:
+                            Notify.Error("Invalid Duration: '{}' at instruction: '{}'".format(self.duration, count))
+                            self.duration = 0
+                            break
+                        self.pwm = commands[count][2]
+                        if self.pwm < 0:
+                            Notify.Error("Invalid PWM: '{}' at instruction '{}'".format(self.pwm, count))
+                            self.pwm = 0
+                            break
+                        Notify.Success("Executing: Di:{} Du:{} P:{}".format(self.direction, self.duration, self.pwm))
+                    self.PassDataToDrive()
+                Notify.Success("Operations Completed.")
+            except(KeyboardInterrupt):
+                Notify.Warning("Aborting.")
+            except(ValueError):
+                Notify.Error("Data Corrupt.")
+
+    def DefaultDataLoad(self):
+        commands = []
+        while True:
+            try:
+                #FileName = input("[?] Please enter the name of the data file to load: ")
+                DataFile = open("DefaultOpData.txt", "r")
+                break
+            except(FileNotFoundError):
+                Notify.Error("Unable to find the file specified.")
+        DataFileContent = DataFile.read()
+        rows = DataFileContent.split("\n")
+        for column in rows:
+            if len(column) > 0:
+                columns = column.split(",")
+                commands.append(columns)
+        #Notify.Success("Data '{}' successfully loaded.".format(FileName))
+        while True:
+            try:
+                Notify.Info("Press enter to execute file, Ctrl+C to abort execution.")
+                input()
+                for count in range(0,len(commands)):
+                    self.direction = commands[count][0]
+                    while True:
+                        Notify.Info("Instruction {}".format(count))
+                        if self.direction not in ["L","F","R"]:
+                            Notify.Error("Invalid direction: '{}' at instruction: '{}'".format(self.direction, count))
+                            self.direction = ""
+                            break
+                        self.duration = commands[count][1]
+                        if self.duration < 0:
+                            Notify.Error("Invalid Duration: '{}' at instruction: '{}'".format(self.duration, count))
+                            self.duration = 0
+                            break
+                        self.pwm = commands[count][2]
+                        if self.pwm < 0:
+                            Notify.Error("Invalid PWM: '{}' at instruction '{}'".format(self.pwm, count))
+                            self.pwm = 0
+                            break
+                        Notify.Success("Executing: Di:{} Du:{} P:{}".format(self.direction, self.duration, self.pwm))
+                    self.PassDataToDrive()
+                Notify.Success("Operations Completed.")
+            except(KeyboardInterrupt):
+                Notify.Warning("Aborting.")
+            except(ValueError):
+                Notify.Error("Data Corrupt.")
+
+    def AI(self):
+        ##Oh boy
+        Notify.Info("Automatic Mode Selected. Press Ctrl+C to abort.")
+        iterations = 0
+        LeftMove = 0
+        RightMove = 0
+        self.distance = 0
+        InitialDistance = 0
+        Directions = ["L","R"]
+        while True:
+            try:
+                self.GetNewDistance()
+                InitialDistance = self.distance
+                if self.distance < 5:
+                    NewDirection = random.choice(Directions)
+                    if NewDirection == "L":
+                        self.duration = 0.25
+                        self.pwm = 0
+                        self.direction = "L"
+                        self.PassDataToDrive()
+                        LeftMove += 1
+                        self.GetNewDistance()
+                        if self.distance < InitialDistance:
+                            Notify.Warning("Tight spot detected.")
+                            InitialDistance = self.distance
+                            self.duration = 0.15
+                            self.pwm = 0.1
+                            self.direction = "R"
+                            RightMove += 1
+                            iterations += 1
+                            self.GetNewDistance()
+                            if self.distance < InitialDistance:
+                                Notify.Warning("Crap. We're stuck.")
+                                Notify.Info("Vehicle stopped. Press Enter to continue.")
+                                input()
+                    elif NewDirection == "R":
+                        self.duration = 0.25
+                        self.pwm = 0
+                        self.direction = "R"
+                        self.PassDataToDrive()
+                        RightMove += 1
+                        self.GetNewDistance()
+                        if self.distance < InitialDistance:
+                            Notify.Warning("Tight spot detected.")
+                            InitialDistance = self.distance
+                            self.duration = 0.15
+                            self.pwm = 0.1
+                            self.direction = "L"
+                            LeftMove += 1
+                            iterations += 1
+                            self.GetNewDistance()
+                            if self.distance < InitialDistance:
+                                Notify.Warning("Crap. We're stuck.")
+                                Notify.Info("Vehicle stopped. Press Enter to continue.")
+                                input()
+                elif self.distance > 5:
+                    self.duration = 1
+                    self.direction = "F"
+                    self.pwm = 0
+                iterations += 1
+            except(KeyboardInterrupt):
+                Notify.Error("Aborting.")
+
+    def MPL(self):
+        while True:
+            try:
+                self.GetNewData()
+                if self.direction == "E":
+                    self.MainMenu()
+            except(KeyboardInterrupt):
+                Notify.Warning("Interrupt caught, exiting.")
+
+
+def MPL():
+    Driver = Drivetrain()
+    Drone = Vehicle()
+    Driver.PreInit()
+    while True:
+        try:
+            Drone.MainMenu()
+        except(KeyboardInterrupt):
+            Notify.Warning("Abort caught, Exiting.")
+            exit()
+MPL()
+
+
+#test = Drivetrain()
+#
+#test.PreInit()
+#while True:
+#    try:
+#        test.GetNewData()
+#    except KeyboardInterrupt:
+#        Notify.Error("Aborting.")

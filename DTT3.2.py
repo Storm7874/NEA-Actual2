@@ -281,7 +281,6 @@ class Rangefinder():
         self.__offset = 0
         self.CalibrateRangefinder()
 
-
 class Control(Drivetrain, Rangefinder):
     def __init__(self):
         self.FirstRun = True
@@ -352,7 +351,6 @@ class Control(Drivetrain, Rangefinder):
                 print("RIGHT")
             self.GetCurrentDistance(RNG, TRIG)
 
-
 def MPL(duration, pwm, direction, STATE):
     STATE = Controller.GetNewDeviceState(STATE)
     print(STATE)
@@ -360,8 +358,6 @@ def MPL(duration, pwm, direction, STATE):
         GetNewDataSet(direction, duration, pwm, DataSetCounter)
         Controller.Execute(duration, pwm, direction, STATE)
         print("duration: {} pwm: {} direction: {}".format(duration, pwm, direction))
-
-
 
 class Device(Control):
 
