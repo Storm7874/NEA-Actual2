@@ -1,10 +1,11 @@
-import DTT
+import DTTR
 from Tkinter import *
 
 main = Tk.Tk()
+Driver = DTTR.Drivetrain()
+def left():
+    Driver.LeftMotor()
 
-def left()
-    DTT.left
 
 left_button = Tk.Button(main, text="<", command=left())
 right_button = Tk.Button(main, text=">", command=right())

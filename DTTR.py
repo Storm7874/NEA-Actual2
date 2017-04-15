@@ -8,6 +8,8 @@ try:
     Notify.SetMode("C")
 except(ImportError):
     print("[!] Failed to import Notify.py")
+    exit()
+
 Notify.Info("DTT Version 4.0 (DTTR)")
 print()
 
@@ -26,6 +28,12 @@ except(ImportError):
     except(ImportError):
         Notify.Error("Failed to import eGPIO modules. Aborting.")
         exit()
+
+try:
+    import utils
+    Notify.Success("Imported Utils")
+except ImportError:
+    Notify.Error("Failed to import utils.")
 
 import os
 import time
@@ -85,7 +93,7 @@ class Drivetrain(Rangefinder):
         while True:
             try:
                 self.duration = float(input("[?] Duration: "))
-                if self.duration > 0:
+                if self.duration < 0:
                     Notify.Warning("Please enter a positive number")
                 break
             except ValueError:
@@ -148,16 +156,18 @@ class Drivetrain(Rangefinder):
             time.sleep(self.duration)
             GPIO.output(self.left, GPIO.HIGH)
         else:
-            timer = 0
+            B = 0
             while True:
-                A = time.time()
-                GPIO.output(self.left, GPIO.LOW)
-                time.sleep(self.pwm)
-                GPIO.output(self.left, GPIO.HIGH)
-                B = time.time()
-                C = B - A
-                if C >= self.duration:
-                    break
+                try:
+                    A = time.process_time()
+                    GPIO.output(self.left, GPIO.LOW)
+                    time.sleep(self.pwm)
+                    GPIO.output(self.left, GPIO.HIGH)
+                    B += time.process_time()
+                    if B >= self.duration:
+                        break
+                except KeyboardInterrupt:
+                    Notify.Info("Maneuver Aborted.")
         Notify.Info("Left Motor D:{} DI:{} P:{}".format(self.duration, self.direction, self.pwm))
 
     def RightMotor(self):
@@ -166,16 +176,18 @@ class Drivetrain(Rangefinder):
             time.sleep(self.duration)
             GPIO.output(self.right, GPIO.HIGH)
         else:
-            timer = 0
+            B = 0
             while True:
-                A = time.time()
-                GPIO.output(self.right, GPIO.LOW)
-                time.sleep(self.pwm)
-                GPIO.output(self.right, GPIO.HIGH)
-                B = time.time()
-                C = B - A
-                if C >= self.duration:
-                    break
+                try:
+                    A = time.process_time()
+                    GPIO.output(self.right, GPIO.LOW)
+                    time.sleep(self.pwm)
+                    GPIO.output(self.right, GPIO.HIGH)
+                    B += time.process_time()
+                    if B >= self.duration:
+                        break
+                except KeyboardInterrupt:
+                    Notify.Info("Maneuver Aborted.")
         Notify.Info("Right Motor D:{} DI:{} P:{}".format(self.duration, self.direction, self.pwm))
 
     def DualMotors(self):
@@ -186,17 +198,20 @@ class Drivetrain(Rangefinder):
             GPIO.output(self.right, GPIO.HIGH)
             GPIO.output(self.left, GPIO.HIGH)
         else:
+            B = 0
             while True:
-                A = time.time()
-                GPIO.output(self.right, GPIO.LOW)
-                GPIO.output(self.left, GPIO.LOW)
-                time.sleep(self.pwm)
-                GPIO.output(self.left, GPIO.HIGH)
-                GPIO.output(self.left, GPIO.HIGH)
-                B = time.time()
-                C = B - A
-                if C >= self.duration:
-                    break
+                try:
+                    A = time.process_time()
+                    GPIO.output(self.right, GPIO.LOW)
+                    GPIO.output(self.left, GPIO.LOW)
+                    time.sleep(self.pwm)
+                    GPIO.output(self.left, GPIO.HIGH)
+                    GPIO.output(self.left, GPIO.HIGH)
+                    B += time.process_time()
+                    if B >= self.duration:
+                        break
+                except KeyboardInterrupt:
+                    Notify.Info("Maneuver Aborted.")
         Notify.Info("Dual Motor D:{} DI:{} P:{}".format(self.duration, self.direction, self.pwm))
 
     def PassDataToDrive(self):
