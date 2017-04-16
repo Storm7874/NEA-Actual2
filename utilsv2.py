@@ -16,7 +16,8 @@ class Main():
         ## 2 = Debug
         self.EnvironmentDefined = False
         if self.EnvironmentDefined == False:
-            Notify.Error("Environment Undefined.")
+            pass
+            #Notify.Error("Environment Undefined.")
         self.Environment = 0
 
     def SetDeviceEnvironment(self, Environment):
@@ -42,7 +43,7 @@ class Main():
     def GetDeviceTemperature(self):
         if self.Environment == 0:
             return -256
-        else:
+        elif self.Environment == 1:
             res = os.popen("vcgencmd measure_temp").readline()
             return(res.replace("temp=","").replace("C\n",""))
 

@@ -57,6 +57,7 @@ class Rangefinder():
         self.ech = 15
         self.delay = 2
         self.distance = 0
+        self.IsUsingHardware = False
 
     def GetNewDistance(self):
         if GPIOstate == False:
@@ -81,8 +82,12 @@ class Rangefinder():
         if GPIOstate == True:
             GPIO.setup(self.trg, GPIO.OUT)
             GPIO.setup(self.ech, GPIO.IN)
+            self.IsUsingHardware = True
         else:
-            pass
+            Notify.Error("Unable to interface with rangefinder.")
+            Notify.Info("Using manual range acquisition")
+            GPIO.setup(self.trg, GPIO.OUT)
+            GPIO.setup(self.ech, GPIO.IN)
 
 
 class Drivetrain(Rangefinder):
@@ -155,7 +160,8 @@ class Drivetrain(Rangefinder):
         GPIO.setup(self.right, GPIO.OUT)
         GPIO.output(self.right, GPIO.HIGH)
         Notify.Info("Setting up Rangefinder... ")
-        Notify.Warning("Cannot interface with Rangefinder!")
+        self.InitialSetup()
+        #Notify.Warning("Cannot interface with Rangefinder!")
         Notify.Success("Setup Complete.")
 
     def LeftMotor(self):
@@ -265,6 +271,7 @@ class Vehicle(Drivetrain):
                 self.minute = 0 + datetime.datetime.today().minute
 
     def AutomaticModeMenu(self):
+        utils.ClearScreen()
         print("""
             |-----------------------------------------------------------------|
             |                   AUTOMATIC MODE - Menu                         |
@@ -286,14 +293,14 @@ class Vehicle(Drivetrain):
                 break
             except ValueError:
                 Notify.Error("Please enter a valid character.")
-            if menuchoice == 1:
-                self.LoadDataFromFile()
-            elif menuchoice == 2:
-                self.DefaultDataLoad()
-            elif menuchoice == 3:
-                self.AI()
-            elif menuchoice == 4:
-                self.MainMenu()
+        if menuchoice == 1:
+            self.LoadDataFromFile()
+        elif menuchoice == 2:
+            self.DefaultDataLoad()
+        elif menuchoice == 3:
+            self.AI()
+        elif menuchoice == 4:
+            self.MainMenu()
 
     def DeviceInfo(self):
         utils.ClearScreen()
@@ -372,6 +379,19 @@ class Vehicle(Drivetrain):
         Notify.Success("Data '{}' successfully loaded.".format(FileName))
         while True:
             try:
+                while True:
+                    try:
+                        opchoice = input("[?] Execute? (Y/N): ")
+                        opchoice = opchoice.upper()
+                        if opchoice not in ["Y","N"]:
+                            Notify.Error("Invalid selection.")
+                        break
+                    except (ValueError):
+                        Notify.Error("Please enter a valid character.")
+                if opchoice == "Y":
+                    pass
+                elif opchoice == "N":
+                    self.AutomaticModeMenu()
                 Notify.Info("Press enter to execute file, Ctrl+C to abort execution.")
                 input()
                 for count in range(0,len(commands)):
@@ -383,17 +403,20 @@ class Vehicle(Drivetrain):
                             self.direction = ""
                             break
                         self.duration = commands[count][1]
+                        self.duration = float(self.duration)
                         if self.duration < 0:
                             Notify.Error("Invalid Duration: '{}' at instruction: '{}'".format(self.duration, count))
                             self.duration = 0
                             break
                         self.pwm = commands[count][2]
+                        self.pwm = float(self.pwm)
                         if self.pwm < 0:
                             Notify.Error("Invalid PWM: '{}' at instruction '{}'".format(self.pwm, count))
                             self.pwm = 0
                             break
                         Notify.Success("Executing: Di:{} Du:{} P:{}".format(self.direction, self.duration, self.pwm))
-                    self.PassDataToDrive()
+                        self.PassDataToDrive()
+                        break
                 Notify.Success("Operations Completed.")
             except(KeyboardInterrupt):
                 Notify.Warning("Aborting.")
@@ -418,8 +441,19 @@ class Vehicle(Drivetrain):
         #Notify.Success("Data '{}' successfully loaded.".format(FileName))
         while True:
             try:
-                Notify.Info("Press enter to execute file, Ctrl+C to abort execution.")
-                input()
+                while True:
+                    try:
+                        opchoice = input("[?] Execute? (Y/N): ")
+                        opchoice = opchoice.upper()
+                        if opchoice not in ["Y","N"]:
+                            Notify.Error("Invalid selection.")
+                        break
+                    except (ValueError):
+                        Notify.Error("Please enter a valid character.")
+                if opchoice == "Y":
+                    pass
+                elif opchoice == "N":
+                    self.AutomaticModeMenu()
                 for count in range(0,len(commands)):
                     self.direction = commands[count][0]
                     while True:
@@ -429,17 +463,20 @@ class Vehicle(Drivetrain):
                             self.direction = ""
                             break
                         self.duration = commands[count][1]
+                        self.duration = float(self.duration)
                         if self.duration < 0:
                             Notify.Error("Invalid Duration: '{}' at instruction: '{}'".format(self.duration, count))
                             self.duration = 0
                             break
                         self.pwm = commands[count][2]
+                        self.pwm = float(self.pwm)
                         if self.pwm < 0:
                             Notify.Error("Invalid PWM: '{}' at instruction '{}'".format(self.pwm, count))
                             self.pwm = 0
                             break
                         Notify.Success("Executing: Di:{} Du:{} P:{}".format(self.direction, self.duration, self.pwm))
-                    self.PassDataToDrive()
+                        self.PassDataToDrive()
+                        break
                 Notify.Success("Operations Completed.")
             except(KeyboardInterrupt):
                 Notify.Warning("Aborting.")
@@ -517,6 +554,7 @@ class Vehicle(Drivetrain):
                     self.MainMenu()
             except(KeyboardInterrupt):
                 Notify.Warning("Interrupt caught, exiting.")
+                self.MainMenu()
 
 
 def MPL():
