@@ -60,9 +60,10 @@ class Rangefinder():
         self.IsUsingHardware = False
 
     def GetNewDistance(self):
+        RandomNumbers = []
         if GPIOstate == False:
             Notify.Warning("Unable to access hardware. Randomly generating values for testing.")
-            self.distance = random.randint(0,50)
+            self.distance = random.randint(0,15)
             Notify.Info("Range: {}cm".format(self.distance))
         elif GPIOstate == True:
             Notify.Info("Probing Distance... ")
@@ -77,6 +78,13 @@ class Rangefinder():
             pulse_duration = 34300 / pulse_duration
             self.distance = pulse_duration
             Notify.Info("Returned distance: {}".format(self.distance))
+
+    def CollisionAvoidance(self):
+        self.GetNewDistance()
+        if self.GetNewDistance() < 3:
+            Notify.Warning("Collision Detected.")
+        else:
+            pass
 
     def InitialSetup(self):
         if GPIOstate == True:
@@ -97,6 +105,11 @@ class Drivetrain(Rangefinder):
         self.pwm = 0
         self.duration = 0
         self.direction = ""
+        self.trg = 14
+        self.ech = 15
+        self.delay = 2
+        self.distance = 0
+        self.IsUsingHardware = False
 
     def GetNewData(self):
         # Get new direction data
@@ -245,11 +258,17 @@ class Vehicle(Drivetrain):
         self.duration = 0
         self.direction = ""
         self.FirstRun = True
-        if self.FirstRun == True:
-            #self.PreInit()
-            self.InitialSetup()
-            Notify.Info("Initial setup completed.")
-            self.FirstRun = False
+        self.trg = 14
+        self.ech = 15
+        self.delay = 2
+        self.distance = 0
+        self.IsUsingHardware = False
+        self.EmulatedIterations = 0
+#        if self.FirstRun == True:
+#            #self.PreInit()
+#            self.InitialSetup()
+#            Notify.Info("Initial setup completed.")
+#            self.FirstRun = False
 
     def GetNewDataSet(self):
         self.day = datetime.datetime.today().day
@@ -397,6 +416,7 @@ class Vehicle(Drivetrain):
                 for count in range(0,len(commands)):
                     self.direction = commands[count][0]
                     while True:
+                        utils.ClearScreen()
                         Notify.Info("Instruction {}".format(count))
                         if self.direction not in ["L","F","R"]:
                             Notify.Error("Invalid direction: '{}' at instruction: '{}'".format(self.direction, count))
