@@ -6,6 +6,7 @@ try:
     from Notify import Main
     Notify = Main()
     Notify.SetMode("C")
+    # Import Notify.py, for handling of colour based commands and messages
 except(ImportError):
     print("[!] Failed to import Notify.py")
     exit()
@@ -15,6 +16,9 @@ print()
 
 try:
     import RPi.GPIO as GPIO
+    #Attempt to import Pi-based GPIO interface module. If these are unavailable, The emulated version is imported,
+    #As well as this, should these modules be unavailable, the program will assume it is not running on a linux
+    #based environment, and instead in a testing scenario.
     Notify.Success("Imported GPIO modules")
     GPIOstate = True
 except(ImportError):
@@ -31,6 +35,7 @@ except(ImportError):
 
 try:
     from utilsv2 import Main as MainUtils
+    # Import utilsv2.py, for handling of platform-specific commands relating to the underlying OS.
     utils = MainUtils()
     utils.SetDeviceEnvironment(1) #### PLATFORM DEPENDANT VARIABLE ####
     Notify.Success("Imported Utils")
@@ -52,6 +57,8 @@ Notify.Success("Module import complete.")
 duration = 24
 
 class Rangefinder():
+    # This class deals with the rangefinder and updating/resetting/calibrating the rangefinder and associated
+    # distance variable
     def __init__(self):
         self.trg = 14
         self.ech = 15
@@ -60,6 +67,7 @@ class Rangefinder():
         self.IsUsingHardware = False
 
     def GetNewDistance(self):
+        # Gets new distance from rangefinder
         RandomNumbers = []
         if GPIOstate == False:
             Notify.Warning("Unable to access hardware. Randomly generating values for testing.")
@@ -87,6 +95,7 @@ class Rangefinder():
             pass
 
     def InitialSetup(self):
+        # Sets up the I/O channels needed for the rangefinder at the start of the program
         if GPIOstate == True:
             GPIO.setup(self.trg, GPIO.OUT)
             GPIO.setup(self.ech, GPIO.IN)
@@ -99,6 +108,8 @@ class Rangefinder():
 
 
 class Drivetrain(Rangefinder):
+    # Master Drivetrain class, dealing with the motors and the hardware aspect of the vehicle. As well as including the
+    # Rangefinder() class as a  subclass
     def __init__(self):
         self.left = 24
         self.right = 26
@@ -112,7 +123,7 @@ class Drivetrain(Rangefinder):
         self.IsUsingHardware = False
 
     def GetNewData(self):
-        # Get new direction data
+        # Get new direction, Duration and PWM data from user. Passes data to variables and error checks it.
         while True:
             try:
                 self.duration = float(input("[?] Duration: "))
@@ -147,9 +158,11 @@ class Drivetrain(Rangefinder):
                 Notify.Error("Please enter a valid direction")
 
         Notify.Info("Data Set collected: Du:{} Di:{} P:{}".format(self.duration, self.direction, self.pwm))
+        # Assuming all the data is correct and valid, the data is then passed to the Drivetrain module.
         self.PassDataToDrive()
 
     def PreInit(self):
+        # Selects weather the program is operating in a testing environment, and sets up the correct hardware as needed
         if GPIOstate == True:
             self.Setup()
         else:
@@ -166,6 +179,7 @@ class Drivetrain(Rangefinder):
         Notify.Success("Setup Complete.")
 
     def eSetup(self):
+        # Setup to run if the program is run in a testing environment
         Notify.Info("Setting up Drivetrain Control Modules...")
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.left, GPIO.OUT)
@@ -178,6 +192,8 @@ class Drivetrain(Rangefinder):
         Notify.Success("Setup Complete.")
 
     def LeftMotor(self):
+        # Method for dealing with the Left motor, depending on weather the command has a PWM value.
+        # Identical to RightMotor
         if self.pwm == 0:
             GPIO.output(self.left, GPIO.LOW)
             time.sleep(self.duration)
@@ -242,6 +258,7 @@ class Drivetrain(Rangefinder):
         Notify.Info("Dual Motor D:{} DI:{} P:{}".format(self.duration, self.direction, self.pwm))
 
     def PassDataToDrive(self):
+        # Method that deals with the Left/Right and Dual motor functions.
         if self.direction == "L":
             self.LeftMotor()
         elif self.direction == "R":
@@ -251,6 +268,7 @@ class Drivetrain(Rangefinder):
 
 
 class Vehicle(Drivetrain):
+    # Master Class that controls all other classes. Is the main body of the program.
     def __init__(self):
         self.left = 24
         self.right = 26
@@ -271,6 +289,7 @@ class Vehicle(Drivetrain):
 #            self.FirstRun = False
 
     def GetNewDataSet(self):
+        # Generates new data for the time/date display at the bottom of the menu.
         self.day = datetime.datetime.today().day
         self.month = datetime.datetime.today().month
         self.year = datetime.datetime.today().year
@@ -381,6 +400,9 @@ class Vehicle(Drivetrain):
             utils.ShutdownDevice()
 
     def LoadDataFromFile(self):
+        # Loads instructions from text files, for execution in program
+        #############
+        # Data queue
         commands = []
         while True:
             try:
@@ -388,7 +410,9 @@ class Vehicle(Drivetrain):
                 DataFile = open(FileName, "r")
                 break
             except(FileNotFoundError):
+                # Checks to make sure the file is there
                 Notify.Error("Unable to find the file specified.")
+        # Reads data from text file, in First in, First out format
         DataFileContent = DataFile.read()
         rows = DataFileContent.split("\n")
         for column in rows:
@@ -444,6 +468,7 @@ class Vehicle(Drivetrain):
                 Notify.Error("Data Corrupt.")
 
     def DefaultDataLoad(self):
+        # Identical to the LoadData() command, however in this case the name of the file is already loaded in.
         commands = []
         while True:
             try:
@@ -504,7 +529,11 @@ class Vehicle(Drivetrain):
                 Notify.Error("Data Corrupt.")
 
     def AI(self):
-        ##Oh boy
+        ##Uses rangefinder values to determine how to move the vehicle. If there is an obstacle detected, the program
+        # will compensate by turning either left or right, depending on a randomly generated value. If the device detects
+        # that the range to the object has decreased further, i.e, if it has turned towards the obstacle, it completes
+        # a 90 degree turn in the opposite direction. If the value is still too low, the device assumes it is stuck and
+        # waits for user intervention.
         Notify.Info("Automatic Mode Selected. Press Ctrl+C to abort.")
         iterations = 0
         LeftMove = 0
@@ -567,6 +596,7 @@ class Vehicle(Drivetrain):
                 Notify.Error("Aborting.")
 
     def MPL(self):
+        # Continuously refreshes the program and keeps it running.
         while True:
             try:
                 self.GetNewData()
@@ -578,6 +608,7 @@ class Vehicle(Drivetrain):
 
 
 def MPL():
+    # Initial class setup. Bootstraps and sets up the program.
     Driver = Drivetrain()
     Drone = Vehicle()
     Driver.PreInit()
